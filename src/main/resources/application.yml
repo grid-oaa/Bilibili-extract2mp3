@@ -1,0 +1,23 @@
+﻿server:
+  port: 8080
+  servlet:
+    context-path: /bilibili-audio
+
+spring:
+  thymeleaf:
+    cache: false
+
+app:
+  media:
+    ytDlpPath: yt-dlp
+    ffmpegPath: ffmpeg
+    workDir: work/tasks
+  task:
+    maxConcurrentTasks: 2
+    pollIntervalMs: 2000
+    coordinatorCorePoolSize: 1
+    coordinatorMaxPoolSize: 2
+    workerCorePoolSize: 0
+    workerMaxPoolSize: 0
+    queueCapacity: 200
+    cleanupDelayMinutes: 10

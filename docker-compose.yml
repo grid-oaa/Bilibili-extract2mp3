@@ -1,0 +1,11 @@
+services:
+  bilibili-audio-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bilibili-audio-service
+    restart: always
+    expose:
+      - "8082"
+    volumes:
+      - /opt/bilibili-audio-data:/app/work/tasks

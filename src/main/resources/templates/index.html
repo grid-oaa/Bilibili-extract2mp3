@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilibili 链接转音频</title>
+    <link rel="stylesheet" th:href="@{/app.css}" href="/app.css">
+</head>
+<body>
+<main class="page">
+    <section class="hero">
+        <p class="eyebrow">Bilibili Audio Service</p>
+        <h1>Bilibili 视频转音频下载</h1>
+        <p class="lead">粘贴公开可访问的Bilibili视频链接，获取音频文件</p>
+    </section>
+
+    <section class="panel">
+        <label class="label" for="linksInput">视频链接（每行一个）</label>
+        <textarea id="linksInput" placeholder="https://www.bilibili.com/video/BV...&#10;https://b23.tv/..." spellcheck="false"></textarea>
+        <div class="actions">
+            <button id="resolveButton" type="button" class="button-secondary">解析链接</button>
+            <button id="submitButton" type="button" disabled>开始处理已选分集</button>
+            <span id="formMessage" class="hint">仅支持公开可访问的视频链接。</span>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div id="progressWidget" class="progress-widget hidden">
+            <div class="progress-head">
+                <div>
+                    <p class="label">当前进度</p>
+                    <h2 id="progressStageText">等待开始</h2>
+                </div>
+                <span id="progressPercentText" class="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-track">
+                <div id="progressBarFill" class="progress-bar-fill"></div>
+            </div>
+            <p id="progressMetaText" class="hint">尚未开始解析或处理任务。</p>
+        </div>
+
+        <div class="tab-bar" role="tablist" aria-label="业务内容切换">
+            <button id="resolveTabButton" type="button" class="tab-button active" data-tab="resolve" role="tab" aria-selected="true">分集选择</button>
+            <button id="taskTabButton" type="button" class="tab-button" data-tab="task" role="tab" aria-selected="false">当前任务</button>
+        </div>
+
+        <div id="resolvePanel" class="tab-panel" role="tabpanel">
+            <div class="task-header">
+                <div>
+                    <p class="label">分集选择</p>
+                    <h2>选择要下载的音频</h2>
+                </div>
+            </div>
+            <p id="resolveSummary" class="hint">解析完成后会在这里展示可选分集。</p>
+            <div id="resolveList" class="resolve-list"></div>
+        </div>
+
+        <div id="taskPanel" class="tab-panel hidden" role="tabpanel">
+            <div id="taskEmptyState" class="empty-state">
+                <h2>当前还没有任务</h2>
+                <p>先解析链接并开始处理后，这里会展示任务状态、统计信息和结果列表。</p>
+            </div>
+
+            <div id="taskContent" class="hidden">
+                <div class="task-header">
+                    <div>
+                        <p class="label">当前任务</p>
+                        <h2 id="taskIdText">-</h2>
+                    </div>
+                    <span id="taskStatusBadge" class="badge">PENDING</span>
+                </div>
+                <p id="taskSummary" class="hint">等待提交。</p>
+                <div id="taskMetrics" class="metrics hidden">
+                    <div class="metric-card">
+                        <span class="metric-label">总任务</span>
+                        <strong id="metricTotal">0</strong>
+                    </div>
+                    <div class="metric-card success">
+                        <span class="metric-label">成功</span>
+                        <strong id="metricSuccess">0</strong>
+                    </div>
+                    <div class="metric-card failed">
+                        <span class="metric-label">失败</span>
+                        <strong id="metricFailed">0</strong>
+                    </div>
+                    <div class="metric-card running">
+                        <span class="metric-label">处理中</span>
+                        <strong id="metricRunning">0</strong>
+                    </div>
+                </div>
+                <a id="downloadLink" class="download hidden" href="#">下载 ZIP</a>
+                <ul id="resultList" class="result-list"></ul>
+                <div id="resultPagination" class="pagination hidden"></div>
+            </div>
+        </div>
+    </section>
+</main>
+<script th:inline="javascript">
+    window.bilibiliAudioConfig = {
+        pollIntervalMs: [[${pollIntervalMs}]],
+        basePath: [[${#httpServletRequest.contextPath}]]
+    };
+</script>
+<script th:src="@{/app.js}" src="/app.js" defer></script>
+</body>
+</html>
