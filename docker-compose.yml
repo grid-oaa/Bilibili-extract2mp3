@@ -1,11 +1,28 @@
-services:
-  bilibili-audio-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: bilibili-audio-service
+﻿services:
+  bilibili-audio:
+    image: maven:3-amazoncorretto-8
+    container_name: bilibili-audio
     restart: always
     expose:
       - "8082"
+    networks:
+      - gateway-net
     volumes:
-      - /opt/bilibili-audio-data:/app/work/tasks
+      - ${APP_JAR_PATH:-/project/find-work/bilibili-audio-service-0.0.1-SNAPSHOT.jar}:/app/app.jar:ro
+      - ${HOST_WORK_DIR:-/project/find-work/bilibili-audio-data}:/app/work/tasks
+      - ${HOST_FFMPEG_PATH:-/usr/local/bin/ffmpeg-static}:/usr/local/bin/ffmpeg:ro
+      - ${HOST_FFPROBE_PATH:-/usr/local/bin/ffprobe-static}:/usr/local/bin/ffprobe:ro
+      - ${HOST_YT_DLP_PATH:-/usr/local/bin/yt-dlp-bin}:/usr/local/bin/yt-dlp:ro
+    command:
+      - java
+      - -jar
+      - /app/app.jar
+      - --server.port=8082
+      - --server.servlet.context-path=${APP_CONTEXT_PATH:-/bilibili-audio}
+      - --app.media.workDir=/app/work/tasks
+      - --app.media.ffmpegPath=/usr/local/bin/ffmpeg
+      - --app.media.ytDlpPath=/usr/local/bin/yt-dlp
+
+networks:
+  gateway-net:
+    external: true
