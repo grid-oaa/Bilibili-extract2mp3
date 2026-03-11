@@ -35,6 +35,7 @@ public class YtDlpAudioExtractionService implements AudioExtractionService {
         if (dependenciesVerified) {
             return;
         }
+        resolveCookiesPath();
         runCommand(Arrays.asList(mediaProperties.getYtDlpPath(), "--version"), "yt-dlp 检查");
         runCommand(Arrays.asList(resolveFfmpegExecutable(), "-version"), "ffmpeg 检查");
         dependenciesVerified = true;
@@ -42,14 +43,17 @@ public class YtDlpAudioExtractionService implements AudioExtractionService {
 
     @Override
     public String resolveTitle(String link) {
-        String output = runCommand(Arrays.asList(
-                mediaProperties.getYtDlpPath(),
+        List<String> command = new ArrayList<String>();
+        command.add(mediaProperties.getYtDlpPath());
+        appendCookiesArgument(command);
+        command.addAll(Arrays.asList(
                 "--skip-download",
                 "--dump-single-json",
                 "--no-playlist",
                 "--no-warnings",
                 link
-        ), "视频元数据解析");
+        ));
+        String output = runCommand(command, "视频元数据解析");
         try {
             JsonNode jsonNode = objectMapper.readTree(output);
             String title = jsonNode.path("title").asText();
@@ -70,8 +74,10 @@ public class YtDlpAudioExtractionService implements AudioExtractionService {
             throw new IllegalStateException("创建输出目录失败: " + ex.getMessage(), ex);
         }
         String outputTemplate = outputDir.resolve(outputBaseName + ".%(ext)s").toString();
-        runCommand(Arrays.asList(
-                mediaProperties.getYtDlpPath(),
+        List<String> command = new ArrayList<String>();
+        command.add(mediaProperties.getYtDlpPath());
+        appendCookiesArgument(command);
+        command.addAll(Arrays.asList(
                 "--no-playlist",
                 "--no-warnings",
                 "--extract-audio",
@@ -84,7 +90,8 @@ public class YtDlpAudioExtractionService implements AudioExtractionService {
                 "--output",
                 outputTemplate,
                 link
-        ), "音频下载与转码");
+        ));
+        runCommand(command, "音频下载与转码");
         Path expectedFile = outputDir.resolve(outputBaseName + ".mp3");
         if (Files.exists(expectedFile)) {
             return expectedFile;
@@ -123,6 +130,26 @@ public class YtDlpAudioExtractionService implements AudioExtractionService {
             }
         }
         return configured;
+    }
+
+    private void appendCookiesArgument(List<String> command) {
+        String cookiesPath = resolveCookiesPath();
+        if (cookiesPath != null) {
+            command.add("--cookies");
+            command.add(cookiesPath);
+        }
+    }
+
+    private String resolveCookiesPath() {
+        String configured = mediaProperties.getCookiesPath();
+        if (configured == null || configured.trim().isEmpty()) {
+            return null;
+        }
+        Path path = Paths.get(configured.trim()).toAbsolutePath().normalize();
+        if (!Files.exists(path) || !Files.isRegularFile(path)) {
+            throw new IllegalStateException("cookies.txt 不存在或不可读: " + path);
+        }
+        return path.toString();
     }
 
     private String runCommand(List<String> command, String stepName) {

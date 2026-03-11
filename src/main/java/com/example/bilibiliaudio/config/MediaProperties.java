@@ -8,6 +8,7 @@ public class MediaProperties {
     private String ytDlpPath = "yt-dlp";
     private String ffmpegPath = "ffmpeg";
     private String workDir = "work/tasks";
+    private String cookiesPath;
 
     public String getYtDlpPath() {
         return ytDlpPath;
@@ -31,5 +32,13 @@ public class MediaProperties {
 
     public void setWorkDir(String workDir) {
         this.workDir = workDir;
+    }
+
+    public String getCookiesPath() {
+        return cookiesPath;
+    }
+
+    public void setCookiesPath(String cookiesPath) {
+        this.cookiesPath = cookiesPath;
     }
 }

@@ -5,13 +5,19 @@ import com.example.bilibiliaudio.dto.ResolvedLinkGroupResponse;
 import com.example.bilibiliaudio.util.BilibiliLinkValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,6 +29,9 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class LinkResolveServiceTest {
+
+    @TempDir
+    Path tempDir;
 
     @Test
     void shouldResolvePlaylistEntriesFromYtDlp() {
@@ -52,6 +61,34 @@ class LinkResolveServiceTest {
         assertEquals("https://www.bilibili.com/video/BV1111111111?p=1", groups.get(0).getOptions().get(0).getLink());
         assertEquals("P2 · 线程池", groups.get(0).getOptions().get(1).getTitle());
         server.verify();
+    }
+
+    @Test
+    void shouldPassCookiesFileToYtDlpWhenConfigured() throws IOException {
+        RestTemplate restTemplate = new RestTemplate();
+        Path cookiesPath = tempDir.resolve("cookies.txt");
+        Files.write(cookiesPath, Collections.singletonList("# Netscape HTTP Cookie File"), StandardCharsets.UTF_8);
+        final AtomicReference<List<String>> captured = new AtomicReference<List<String>>();
+        MediaProperties mediaProperties = mediaProperties();
+        mediaProperties.setCookiesPath(cookiesPath.toString());
+        LinkResolveService service = new LinkResolveService(
+                new BilibiliLinkValidator(),
+                restTemplate,
+                new ObjectMapper(),
+                mediaProperties,
+                new LinkResolveService.CommandRunner() {
+                    @Override
+                    public String run(List<String> command, String stepName) {
+                        captured.set(command);
+                        return "{\"title\":\"合集课程\",\"entries\":[{\"title\":\"第一节\",\"webpage_url\":\"https://www.bilibili.com/video/BV2222222222?p=1\",\"playlist_index\":1}]}";
+                    }
+                }
+        );
+
+        service.resolveLinks(Collections.singletonList("https://www.bilibili.com/video/BV2222222222"));
+
+        assertTrue(captured.get().contains("--cookies"));
+        assertTrue(captured.get().contains(cookiesPath.toAbsolutePath().normalize().toString()));
     }
 
     @Test

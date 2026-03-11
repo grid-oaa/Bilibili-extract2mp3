@@ -109,6 +109,7 @@ app:
     ytDlpPath: yt-dlp
     ffmpegPath: ffmpeg
     workDir: work/tasks
+    cookiesPath: /path/to/cookies.txt
   task:
     pollIntervalMs: 2000
     cleanupDelayMinutes: 10
@@ -121,6 +122,7 @@ app:
 - `app.media.ytDlpPath`：`yt-dlp` 可执行文件路径
 - `app.media.ffmpegPath`：`ffmpeg` 可执行文件路径
 - `app.media.workDir`：任务工作目录
+- `app.media.cookiesPath`：Bilibili `cookies.txt` 文件路径，用于提升 `yt-dlp` 解析成功率
 - `app.task.pollIntervalMs`：前端轮询任务状态间隔
 - `app.task.cleanupDelayMinutes`：下载后延迟清理任务文件的分钟数
 
@@ -154,9 +156,26 @@ app:
 推荐部署方式：
 
 - 本地打好 `jar`
-- 服务器提前准备 `ffmpeg`、`ffprobe` 和 `yt-dlp` 可执行文件
+- 服务器提前准备 `ffmpeg`、`ffprobe`、`yt-dlp` 可执行文件，以及可选的 `cookies.txt`
 - 通过 `docker-compose.yml` 将宿主机的 `jar`、`ffmpeg`、`ffprobe`、`yt-dlp` 挂载到容器内
 
+## cookies.txt 配置
+
+如果云服务器访问 Bilibili 时出现 `412 Precondition Failed`，可以在服务端配置 `cookies.txt`。
+
+示例：
+
+```yaml
+app:
+  media:
+    cookiesPath: /opt/bilibili-audio-service/cookies.txt
+```
+
+说明：
+
+- `cookies.txt` 建议从浏览器导出 Netscape 格式
+- 该文件包含登录态，不要提交到 Git 仓库
+- 配置后，分集解析和音频下载两个阶段都会自动带上 `--cookies`
 
 ## 当前限制
 
@@ -166,7 +185,6 @@ app:
 - 下载方式固定为 ZIP 打包下载
 - 依赖 `yt-dlp` 对页面和分集的解析能力
 - Docker Compose 方案依赖宿主机上已经存在 `ffmpeg`、`ffprobe` 和 `yt-dlp`
-
 
 ## 免责声明
 

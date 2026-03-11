@@ -21,6 +21,9 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -118,13 +121,16 @@ public class LinkResolveService {
 
     private ResolvedLinkGroupResponse resolveByYtDlp(String link) {
         try {
-            String output = commandRunner.run(Arrays.asList(
-                    mediaProperties.getYtDlpPath(),
+            List<String> command = new ArrayList<String>();
+            command.add(mediaProperties.getYtDlpPath());
+            appendCookiesArgument(command);
+            command.addAll(Arrays.asList(
                     "--skip-download",
                     "--dump-single-json",
                     "--no-warnings",
                     link
-            ), "链接解析");
+            ));
+            String output = commandRunner.run(command, "链接解析");
             JsonNode root = objectMapper.readTree(output);
             JsonNode entries = root.path("entries");
             if (!entries.isArray() || entries.size() == 0) {
@@ -181,6 +187,19 @@ public class LinkResolveService {
             return "https://www.bilibili.com/video/" + url.toUpperCase(Locale.ROOT);
         }
         return fallbackLink;
+    }
+
+    private void appendCookiesArgument(List<String> command) {
+        String configured = mediaProperties.getCookiesPath();
+        if (configured == null || configured.trim().isEmpty()) {
+            return;
+        }
+        Path path = Paths.get(configured.trim()).toAbsolutePath().normalize();
+        if (!Files.exists(path) || !Files.isRegularFile(path)) {
+            throw new IllegalStateException("cookies.txt 不存在或不可读: " + path);
+        }
+        command.add("--cookies");
+        command.add(path.toString());
     }
 
     private String buildOptionTitle(JsonNode entry, String optionLink, Integer page) {

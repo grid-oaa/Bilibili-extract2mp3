@@ -1,4 +1,4 @@
-﻿server:
+server:
   port: 8080
   servlet:
     context-path: /bilibili-audio
@@ -12,6 +12,7 @@ app:
     ytDlpPath: yt-dlp
     ffmpegPath: ffmpeg
     workDir: work/tasks
+    cookiesPath: D:/workspace/find-work/runtime/cookies.txt
   task:
     maxConcurrentTasks: 2
     pollIntervalMs: 2000
